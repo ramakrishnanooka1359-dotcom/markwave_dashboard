@@ -1,25 +1,30 @@
-# Step 1: Build React app
-FROM node:18 AS builder
+# Multi-stage Dockerfile
+# 1) Build React app using Node
+# 2) Serve static build with Nginx
+
+FROM node:18-alpine AS build
+
 WORKDIR /app
+
+# Install dependencies (use npm ci for reproducible installs)
 COPY package*.json ./
-RUN npm install
+RUN npm ci --silent
+
+# Copy source and build
 COPY . .
 RUN npm run build
 
-# Step 2: Serve with Nginx
+########################################
 FROM nginx:alpine
 
-# SPA routing support
-RUN printf "server {\n\
-    listen 80;\n\
-    root /usr/share/nginx/html;\n\
-\n\
-    location / {\n\
-        try_files \$uri /index.html;\n\
-    }\n\
-}\n" > /etc/nginx/conf.d/default.conf
+# Remove default nginx static files
+RUN rm -rf /usr/share/nginx/html/*
 
-# Copy build output from builder
-COPY --from=builder /app/build /usr/share/nginx/html
+# Copy built files from the build stage
+COPY --from=build /app/build /usr/share/nginx/html
 
+# Expose port used by Cloud Run
+EXPOSE 80
+
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
