@@ -97,7 +97,7 @@ const BuffaloTree: React.FC = () => {
 
   const milkStart = addYears(bornDate, 3); // Jan 2026
   const windowStart = milkStart;
-  const windowEnd = addYears(windowStart, 10); // Jan 2036
+  const windowEnd = addYears(windowStart, 9); // Jan 2036
 
   const tree = generateBuffalo(parentName, bornDate, windowStart, windowEnd);
   const totalBuffalos = countTotalBuffalos(tree);

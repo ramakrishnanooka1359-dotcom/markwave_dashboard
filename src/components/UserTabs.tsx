@@ -203,9 +203,18 @@ const UserTabs: React.FC = () => {
         refered_by_mobile: formData.refered_by_mobile,
         refered_by_name: formData.refered_by_name,
       });
-      console.log('User created:', response.data);
+      
+      console.log('User response:', response.data);
+      
+      // Check if user already exists
+      if (response.data.message === 'User already exists') {
+        alert('User already exists with this mobile number.');
+      } else {
+        alert('User created successfully!');
+      }
+      
+      // Close modal and reset form
       setShowModal(false);
-      // Reset form data
       setFormData({
         mobile: '',
         first_name: '',
@@ -213,6 +222,7 @@ const UserTabs: React.FC = () => {
         refered_by_mobile: '',
         refered_by_name: '',
       });
+      
       // Refresh the referral users list
       if (activeTab === 'nonVerified') {
         const refreshResponse = await axios.get('http://localhost:8000/users/referrals');
@@ -467,8 +477,38 @@ const UserTabs: React.FC = () => {
       )}
 
       {showModal && (
-        <div className="modal">
-          <div className="modal-content">
+        <div className="modal" onClick={handleCloseModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={handleCloseModal}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                color: '#9ca3af',
+                cursor: 'pointer',
+                width: '2rem',
+                height: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                e.currentTarget.style.color = '#374151';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#9ca3af';
+              }}
+            >
+              ×
+            </button>
             <h3>Add New Referral</h3>
             <form onSubmit={handleSubmit}>
               <label>
