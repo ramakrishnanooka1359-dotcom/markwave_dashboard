@@ -3,6 +3,128 @@ import './UserTabs.css';
 import BuffaloTree from './BuffaloTree';
 import axios from 'axios';
 
+// Product Image Carousel Component
+const ProductImageCarousel: React.FC<{ images: string[], breed: string, inStock: boolean }> = ({ images, breed, inStock }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  return (
+    <div style={{ position: 'relative', height: '200px', overflow: 'hidden' }}>
+      <img 
+        src={images[currentImageIndex]} 
+        alt={`${breed} - Image ${currentImageIndex + 1}`}
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          objectFit: 'cover',
+          filter: inStock ? 'none' : 'grayscale(30%)'
+        }}
+      />
+      
+      {/* Navigation arrows - only show if multiple images */}
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={prevImage}
+            style={{
+              position: 'absolute',
+              left: '8px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,0.5)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px'
+            }}
+          >
+            ‹
+          </button>
+          <button
+            onClick={nextImage}
+            style={{
+              position: 'absolute',
+              right: '8px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'rgba(0,0,0,0.5)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '16px'
+            }}
+          >
+            ›
+          </button>
+        </>
+      )}
+      
+      {/* Image indicators - only show if multiple images */}
+      {images.length > 1 && (
+        <div style={{
+          position: 'absolute',
+          bottom: '8px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          display: 'flex',
+          gap: '4px'
+        }}>
+          {images.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentImageIndex(index)}
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                border: 'none',
+                background: index === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)',
+                cursor: 'pointer'
+              }}
+            />
+          ))}
+        </div>
+      )}
+      
+      {/* Out of stock overlay */}
+      {!inStock && (
+        <div style={{
+          position: 'absolute',
+          top: '8px',
+          right: '8px',
+          background: '#dc2626',
+          color: 'white',
+          padding: '4px 8px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          fontWeight: '600'
+        }}>
+          Out of Stock
+        </div>
+      )}
+    </div>
+  );
+};
+
 const UserTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'nonVerified' | 'existing' | 'tree' | 'products'>('nonVerified');
   const [showModal, setShowModal] = useState(false);
@@ -235,36 +357,17 @@ const UserTabs: React.FC = () => {
                         borderRadius: '12px', 
                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)', 
                         overflow: 'hidden',
-                        border: '1px solid #e5e7eb'
+                        border: '1px solid #e5e7eb',
+                        opacity: product.inStock ? 1 : 0.6,
+                        filter: product.inStock ? 'none' : 'grayscale(50%)'
                       }}>
-                        {/* Product Image */}
+                        {/* Product Image Carousel */}
                         {product.buffalo_images && product.buffalo_images.length > 0 && (
-                          <div style={{ position: 'relative', height: '200px', overflow: 'hidden' }}>
-                            <img 
-                              src={product.buffalo_images[0]} 
-                              alt={product.breed}
-                              style={{ 
-                                width: '100%', 
-                                height: '100%', 
-                                objectFit: 'cover' 
-                              }}
-                            />
-                            {!product.inStock && (
-                              <div style={{
-                                position: 'absolute',
-                                top: '8px',
-                                right: '8px',
-                                background: '#dc2626',
-                                color: 'white',
-                                padding: '4px 8px',
-                                borderRadius: '4px',
-                                fontSize: '12px',
-                                fontWeight: '600'
-                              }}>
-                                Out of Stock
-                              </div>
-                            )}
-                          </div>
+                          <ProductImageCarousel 
+                            images={product.buffalo_images} 
+                            breed={product.breed}
+                            inStock={product.inStock}
+                          />
                         )}
                         
                         {/* Product Details */}
