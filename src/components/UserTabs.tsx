@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './UserTabs.css';
 import BuffaloTree from './BuffaloTree';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
 // Product Image Carousel Component
 const ProductImageCarousel: React.FC<{ images: string[], breed: string, inStock: boolean }> = ({ images, breed, inStock }) => {
@@ -142,7 +143,7 @@ const UserTabs: React.FC = () => {
   useEffect(() => {
     const fetchReferralUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/users/referrals');
+        const response = await axios.get(API_ENDPOINTS.getReferrals());
         setReferralUsers(response.data.users || []);
       } catch (error) {
         setReferralUsers([]); // Clear users on error
@@ -151,7 +152,7 @@ const UserTabs: React.FC = () => {
 
     const fetchExistingCustomers = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/users/customers');
+        const response = await axios.get(API_ENDPOINTS.getUsers());
         setExistingCustomers(response.data.users || []);
       } catch (error) {
         setExistingCustomers([]); // Clear users on error
@@ -160,7 +161,7 @@ const UserTabs: React.FC = () => {
 
     const fetchProducts = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/products');
+        const response = await axios.get(API_ENDPOINTS.getProducts());
         // Extract products array from the response structure
         const productsData = response.data?.products || [];
         setProducts(productsData);
@@ -196,7 +197,7 @@ const UserTabs: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8000/users', {
+      const response = await axios.post(API_ENDPOINTS.createUser(), {
         mobile: formData.mobile,
         first_name: formData.first_name,
         last_name: formData.last_name,
@@ -225,7 +226,7 @@ const UserTabs: React.FC = () => {
       
       // Refresh the referral users list
       if (activeTab === 'nonVerified') {
-        const refreshResponse = await axios.get('http://localhost:8000/users/referrals');
+        const refreshResponse = await axios.get(API_ENDPOINTS.getReferrals());
         setReferralUsers(refreshResponse.data.users || []);
       }
     } catch (error) {

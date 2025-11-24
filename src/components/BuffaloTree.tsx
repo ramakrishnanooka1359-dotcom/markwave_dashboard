@@ -108,43 +108,40 @@ const BuffaloTree: React.FC = () => {
     <div>
       {/* Summary Card */}
       <div style={{ 
-        padding: '1.5rem', 
+        padding: '1rem', 
         background: '#fff', 
-        borderRadius: '12px', 
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        textAlign: 'center',
+        borderRadius: '8px', 
+        boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
         border: '1px solid #e5e7eb',
-        marginBottom: '1rem'
+        marginBottom: '1rem',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
       }}>
-        <h3 style={{ 
-          margin: '0 0 1rem 0', 
-          fontSize: '1.25rem', 
-          fontWeight: '600', 
-          color: '#111' 
-        }}>
-          Buffalo Family Tree Summary
-        </h3>
         <div style={{ 
-          fontSize: '2.5rem', 
-          fontWeight: '700', 
-          color: '#2563eb',
-          marginBottom: '0.5rem'
-        }}>
-          {totalBuffalos}
-        </div>
-        <p style={{ 
-          margin: 0, 
           fontSize: '1rem', 
-          color: '#6b7280' 
+          color: '#374151',
+          fontWeight: '500'
         }}>
-          Total Buffalos in Family Tree
-        </p>
+          <span style={{ fontWeight: '600' }}>Buffalo count:</span> 
+          <span style={{ 
+            marginLeft: '0.5rem', 
+            color: '#2563eb', 
+            fontWeight: '700',
+            fontSize: '1.1rem'
+          }}>
+            {totalBuffalos}
+          </span>
+        </div>
         <div style={{ 
-          marginTop: '0.75rem', 
           fontSize: '0.875rem', 
-          color: '#9ca3af' 
+          color: '#6b7280',
+          fontWeight: '500'
         }}>
-          Projection Period: {formatYM(windowStart)} to {formatYM(windowEnd)}
+          <span style={{ fontWeight: '600' }}>Projection period:</span> 
+          <span style={{ marginLeft: '0.5rem' }}>
+            {formatYM(windowStart)} to {formatYM(windowEnd)}
+          </span>
         </div>
       </div>
 
