@@ -129,7 +129,16 @@ const ProductImageCarousel: React.FC<{ images: string[], breed: string, inStock:
 const UserTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'nonVerified' | 'existing' | 'tree' | 'products'>('nonVerified');
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
   const [formData, setFormData] = useState({
+    mobile: '',
+    first_name: '',
+    last_name: '',
+    refered_by_mobile: '',
+    refered_by_name: '',
+  });
+  const [editFormData, setEditFormData] = useState({
     mobile: '',
     first_name: '',
     last_name: '',
@@ -235,6 +244,61 @@ const UserTabs: React.FC = () => {
     }
   };
 
+  const handleRowClick = (user: any) => {
+    setEditingUser(user);
+    setEditFormData({
+      mobile: user.mobile,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      refered_by_mobile: user.refered_by_mobile || '',
+      refered_by_name: user.refered_by_name || '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditFormData({ ...editFormData, [name]: value });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.put(`http://localhost:8000/users/${editingUser.mobile}`, {
+        first_name: editFormData.first_name,
+        last_name: editFormData.last_name,
+        refered_by_mobile: editFormData.refered_by_mobile,
+        refered_by_name: editFormData.refered_by_name,
+      });
+      
+      console.log('User updated:', response.data);
+      alert('User updated successfully!');
+      
+      // Close modal and reset form
+      setShowEditModal(false);
+      setEditingUser(null);
+      setEditFormData({
+        mobile: '',
+        first_name: '',
+        last_name: '',
+        refered_by_mobile: '',
+        refered_by_name: '',
+      });
+      
+      // Refresh the referral users list
+      const refreshResponse = await axios.get('http://localhost:8000/users/referrals');
+      setReferralUsers(refreshResponse.data.users || []);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('Error updating user. Please try again.');
+    }
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingUser(null);
+  };
+
   return (
     <div>
       <div className="tabs">
@@ -276,12 +340,13 @@ const UserTabs: React.FC = () => {
                     <th>Mobile</th>
                     <th>Referred By</th>
                     <th>Referrer Mobile</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {referralUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={4} style={{ textAlign: 'center', color: '#888' }}>No users found</td>
+                      <td colSpan={5} style={{ textAlign: 'center', color: '#888' }}>No users found</td>
                     </tr>
                   ) : (
                     referralUsers.map((user: any, index: number) => (
@@ -290,6 +355,32 @@ const UserTabs: React.FC = () => {
                         <td>{user.mobile}</td>
                         <td>{user.refered_by_name || '-'}</td>
                         <td>{user.refered_by_mobile || '-'}</td>
+                        <td>
+                          <button
+                            onClick={() => handleRowClick(user)}
+                            style={{
+                              background: '#3b82f6',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '6px',
+                              padding: '6px 12px',
+                              fontSize: '12px',
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#2563eb';
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#3b82f6';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }}
+                          >
+                            Edit
+                          </button>
+                        </td>
                       </tr>
                     ))
                   )}
@@ -569,6 +660,104 @@ const UserTabs: React.FC = () => {
               </label>
               <button type="submit">Submit</button>
               <button type="button" onClick={handleCloseModal}>Cancel</button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editingUser && (
+        <div className="modal" onClick={handleCloseEditModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button 
+              onClick={handleCloseEditModal}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                fontSize: '1.5rem',
+                color: '#9ca3af',
+                cursor: 'pointer',
+                width: '2rem',
+                height: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '50%',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#f3f4f6';
+                e.currentTarget.style.color = '#374151';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#9ca3af';
+              }}
+            >
+              ×
+            </button>
+            <h3>Edit Referral</h3>
+            <form onSubmit={handleEditSubmit}>
+              <label>
+                Mobile:
+                <input
+                  type="tel"
+                  name="mobile"
+                  value={editFormData.mobile}
+                  disabled
+                  style={{ backgroundColor: '#f3f4f6', cursor: 'not-allowed' }}
+                  placeholder="Mobile number (cannot be changed)"
+                />
+              </label>
+              <label>
+                First Name:
+                <input
+                  type="text"
+                  name="first_name"
+                  value={editFormData.first_name}
+                  onChange={handleEditInputChange}
+                  required
+                  placeholder="Enter first name"
+                />
+              </label>
+              <label>
+                Last Name:
+                <input
+                  type="text"
+                  name="last_name"
+                  value={editFormData.last_name}
+                  onChange={handleEditInputChange}
+                  required
+                  placeholder="Enter last name"
+                />
+              </label>
+              <label>
+                Referred By(Mobile):
+                <input
+                  type="tel"
+                  name="refered_by_mobile"
+                  value={editFormData.refered_by_mobile}
+                  onChange={handleEditInputChange}
+                  required
+                  placeholder="Enter referrer's mobile"
+                />
+              </label>
+              <label>
+                Referred By(Name):
+                <input
+                  type="text"
+                  name="refered_by_name"
+                  value={editFormData.refered_by_name}
+                  onChange={handleEditInputChange}
+                  required
+                  placeholder="Enter referrer's name"
+                />
+              </label>
+              <button type="submit">Update</button>
+              <button type="button" onClick={handleCloseEditModal}>Cancel</button>
             </form>
           </div>
         </div>
