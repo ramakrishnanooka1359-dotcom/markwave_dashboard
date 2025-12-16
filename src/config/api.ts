@@ -1,18 +1,10 @@
 export const API_CONFIG = {
   getBaseUrl: () => {
-    // Force production URL - Updated at 12:12 PM
+    const corsUrl = 'https://cors-couipk45fa-el.a.run.app';
     const productionUrl = 'https://markwave-live-services-couipk45fa-el.a.run.app';
-
-    // Determine if running on localhost
-    const isLocalhost = window.location.hostname === 'localhost' ||
-                        window.location.hostname === '127.0.0.1';
-
-    const baseUrl = isLocalhost ? 'http://localhost:8000' : productionUrl;
-    
-    // Debug logging
-    console.log('🔗 API Base URL:', baseUrl);
-    console.log('🌐 Current hostname:', window.location.hostname);
-    
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const baseUrl = isLocalhost ? 'http://localhost:8000' : `${corsUrl}/${productionUrl}`;
+    console.log('🔗 API Base URL (with CORS):', baseUrl);
     return baseUrl;
   }
 };
