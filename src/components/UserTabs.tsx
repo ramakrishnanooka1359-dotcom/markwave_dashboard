@@ -166,6 +166,9 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
   const [products, setProducts] = useState<any[]>([]);
   const [pendingUnits, setPendingUnits] = useState<any[]>([]);
   const [ordersError, setOrdersError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("All Payments");
+  const [statusFilter, setStatusFilter] = useState("All Status");
 
   useEffect(() => {
     const fetchReferralUsers = async () => {
@@ -185,7 +188,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
             'X-Admin-Mobile': adminMobile,
           },
         });
-        const units = response.data?.units || [];
+        const units = response.data?.orders || [];
         setPendingUnits(units);
       } catch (error: any) {
         console.error('Error fetching pending units:', error);
@@ -485,45 +488,122 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
     setEditingUser(null);
   };
 
+  const filteredUnits = pendingUnits.filter((entry: any) => {
+    const unit = entry.order || {};
+    const tx = entry.transaction || {};
+    const inv = entry.investor || {};
+
+
+    let matchesSearch = true;
+    if (searchQuery) {
+      const query = searchQuery.toLocaleLowerCase();
+      matchesSearch = (
+        (unit.id && String(unit.id).toLocaleLowerCase().includes(query)) ||
+        (unit.userId && String(unit.userId).toLocaleLowerCase().includes(query)) ||
+        (unit.breedId && String(unit.breedId).toLocaleLowerCase().includes(query)) ||
+        (inv.name && String(inv.name).toLocaleLowerCase().includes(query))
+      )
+    }
+
+    // 2. Payment Filter
+    let matchesPayment = true;
+    if (paymentFilter !== 'All Payments') {
+      matchesPayment = tx.paymentType === paymentFilter;
+    }
+
+    // 3. Status Filter
+    let matchesStatus = true;
+    if (statusFilter !== 'All Status') {
+      matchesStatus = unit.paymentStatus === statusFilter;
+    }
+
+    return matchesSearch && matchesPayment && matchesStatus;
+  });
+
   return (
     <div>
-      <div className="tabs">
-        <button
-          className={activeTab === 'orders' ? 'active' : ''}
-          onClick={() => setActiveTab('orders')}
-        >
-          Orders
-        </button>
-        <button
-          className={activeTab === 'nonVerified' ? 'active' : ''}
-          onClick={() => setActiveTab('nonVerified')}
-        >
-          Referral
-        </button>
-        <button
-          className={activeTab === 'existing' ? 'active' : ''}
-          onClick={() => setActiveTab('existing')}
-        >
-          Verified Users
-        </button>
-        <button
-          className={activeTab === 'tree' ? 'active' : ''}
-          onClick={() => setActiveTab('tree')}
-        >
-          Buffalo Tree
-        </button>
-        <button
-          className={activeTab === 'products' ? 'active' : ''}
-          onClick={() => setActiveTab('products')}
-        >
-          Products
-        </button>
-      </div>
+      <nav className="user-navbar">
+        <ul className="user-navbar-list">
+          <li>
+            <button
+              className={`user-nav-item ${activeTab === 'orders' ? 'active' : ''}`}
+              onClick={() => setActiveTab('orders')}
+            >
+              Orders
+            </button>
+          </li>
+          <li>
+            <button
+              className={`user-nav-item ${activeTab === 'nonVerified' ? 'active' : ''}`}
+              onClick={() => setActiveTab('nonVerified')}
+            >
+              Referral
+            </button>
+          </li>
+          <li>
+            <button
+              className={`user-nav-item ${activeTab === 'existing' ? 'active' : ''}`}
+              onClick={() => setActiveTab('existing')}
+            >
+              Verified Users
+            </button>
+          </li>
+          <li>
+            <button
+              className={`user-nav-item ${activeTab === 'tree' ? 'active' : ''}`}
+              onClick={() => setActiveTab('tree')}
+            >
+              Buffalo Tree
+            </button>
+          </li>
+          <li>
+            <button
+              className={`user-nav-item ${activeTab === 'products' ? 'active' : ''}`}
+              onClick={() => setActiveTab('products')}
+            >
+              Products
+            </button>
+          </li>
+        </ul>
+      </nav>
 
       <div className="tab-content">
         {activeTab === 'orders' ? (
           <div>
+
             <h2>Live Orders (Pending Approval)</h2>
+            <div className="filter-controls">
+              <input
+                type="text"
+                placeholder="Search By Unit ID,Name,Mobile,Buffalo ID"
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+
+              <select
+                className="filter-select"
+                value={paymentFilter}
+                onChange={(e) => setPaymentFilter(e.target.value)}
+              >
+                <option value="All Payments">All Payments</option>
+                <option value="BANK_TRANSFER">Bank Transfer</option>
+                <option value="CHEQUE">Cheque</option>
+                <option value="ONLINE_UPI">Online/UPI</option>
+              </select>
+              <select
+                className="filter-select"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="All Status">All Status</option>
+                <option value="PENDING_ADMIN_VERIFICATION">Needs Approval</option>
+                <option value="PENDING_PAYMENT">Not Paid(Draft)</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+
+            </div>
             {ordersError && (
               <div style={{ marginBottom: '0.75rem', color: '#dc2626' }}>{ordersError}</div>
             )}
@@ -532,6 +612,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
                 <thead>
                   <tr>
                     <th>Unit ID</th>
+                    <th>Username</th>
                     <th>User Mobile</th>
                     <th>Buffalo ID</th>
                     <th>Units</th>
@@ -544,19 +625,22 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {pendingUnits.length === 0 ? (
+                  {filteredUnits.length === 0 ? (
                     <tr>
-                      <td colSpan={10} style={{ textAlign: 'center', color: '#888' }}>No pending orders</td>
+                      <td colSpan={10} style={{ textAlign: 'center', color: '#888' }}>
+                        {searchQuery ? 'No matching orders found' : 'No pending orders'}
+                      </td>
                     </tr>
                   ) : (
-                    pendingUnits.map((entry: any, index: number) => {
-                      const unit = entry.unit || {};
+                    filteredUnits.map((entry: any, index: number) => {
+                      const unit = entry.order || {};
                       const tx = entry.transaction || {};
+                      const inv = entry.investor || {};
                       return (
                         <tr key={unit.id || index}>
                           <td>{unit.id}</td>
-                          <td>{unit.userId}</td>
-                          <td>{unit.buffaloId}</td>
+                          <td>{inv.name}</td>
+                          <td>{unit.breedId}</td>
                           <td>{unit.numUnits}</td>
                           <td>{tx.amount ?? '-'}</td>
                           <td>{tx.paymentType || '-'}</td>
@@ -935,6 +1019,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile }) => {
                 Mobile:
                 <input
                   type="tel"
+                  maxLength={10}
                   name="mobile"
                   value={formData.mobile}
                   onChange={handleInputChange}

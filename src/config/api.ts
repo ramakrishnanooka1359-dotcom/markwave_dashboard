@@ -1,9 +1,9 @@
 export const API_CONFIG = {
   getBaseUrl: () => {
     const corsUrl = 'https://cors-couipk45fa-el.a.run.app';
-    const productionUrl = 'https://markwave-live-services-couipk45fa-el.a.run.app';
+    const productionUrl = 'https://markwave-live-apis-couipk45fa-el.a.run.app';
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const baseUrl = isLocalhost ? 'http://localhost:8000' : `${corsUrl}/${productionUrl}`;
+    const baseUrl = `${corsUrl}/${productionUrl}`;
     console.log('🔗 API Base URL (with CORS):', baseUrl);
     return baseUrl;
   }
