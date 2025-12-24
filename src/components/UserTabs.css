@@ -308,7 +308,6 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0.3);
     /* Darker overlay for better contrast */
-    backdrop-filter: blur(2px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -398,18 +397,19 @@
   .user-table tr:hover {
     background-color: #f8f9fa;
   }
-.search-input {
-  flex: 1;
-  min-width: 250px;
-  max-width: 400px;
-  padding: 0.75rem 1rem;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
 
-  outline: none;
-  transition: all 0.2s box-shadow, border-color;
-  font-size: 0.95rem;
-}
+  .search-input {
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    outline: none;
+    transition: all 0.2s box-shadow, border-color;
+    font-size: 0.95rem;
+  }
 
   /* Status Badges - Soft Style */
   .status-badge {
@@ -425,7 +425,7 @@
   }
 
   .status-badge.pending {
-   color: #f59d39;
+    color: #f59d39;
   }
 
   .status-badge.approved {
@@ -466,10 +466,12 @@
     transform: translateY(-1px);
     box-shadow: 0 7px 14px rgba(50, 50, 93, .1), 0 3px 6px rgba(0, 0, 0, .08);
   }
-.h-5{
-  min-height: 45px;
-  margin-left: 10px;
-}
+
+  .h-5 {
+    min-height: 45px;
+    margin-left: 10px;
+  }
+
   /* Inputs & Forms */
   input,
   select,
@@ -526,12 +528,14 @@
     transition: opacity 0.3s ease;
     pointer-events: none;
   }
-.view-proof-btn{
-  border: none;
-  background-color: white;
-  color: #0261b4;
-  font-weight: 600;
-}
+
+  .view-proof-btn {
+    border: none;
+    background-color: white;
+    color: #0261b4;
+    font-weight: 600;
+  }
+
   .sidebar-overlay.open {
     opacity: 1;
     pointer-events: auto;
@@ -621,91 +625,95 @@
 
     /* Adjust Status Badge in header if needed */
   }
-@keyframes slideDownOrder {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
+
+  @keyframes slideDownOrder {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .order-expand-animation {
+    animation: slideDownOrder 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   }
-}
 
-.order-expand-animation {
-  animation: slideDownOrder 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-.units-sidebar {
-  scrollbar-width: thin;
-  scrollbar-color: #e5e7eb transparent;
-}
+  .units-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: #e5e7eb transparent;
+  }
 
-.units-sidebar::-webkit-scrollbar {
-  width: 4px;
-}
+  .units-sidebar::-webkit-scrollbar {
+    width: 4px;
+  }
 
-.units-sidebar::-webkit-scrollbar-track {
-  background: transparent;
-}
+  .units-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-.units-sidebar::-webkit-scrollbar-thumb {
-  background-color: #e5e7eb;
-  border-radius: 20px;
-}
+  .units-sidebar::-webkit-scrollbar-thumb {
+    background-color: #e5e7eb;
+    border-radius: 20px;
+  }
 
-/* Admin Popover */
-.admin-popover {
-  position: absolute;
-  bottom: 80px;
-  left: 70px;
-  width: 280px;
-  z-index: 2000;
-}
-
-@media (max-width: 768px) {
+  /* Admin Popover */
   .admin-popover {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    bottom: auto;
-    width: 90%;
-    max-width: 320px;
+    position: absolute;
+    bottom: 80px;
+    left: 70px;
+    width: 280px;
+    z-index: 2000;
   }
-}
 
-/* Health Status Styles */
-.health-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  font-weight: 600;
-}
+  @media (max-width: 768px) {
+    .admin-popover {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      bottom: auto;
+      width: 90%;
+      max-width: 320px;
+    }
+  }
 
-.health-status-text {
-  color: #67748e;
-}
+  /* Health Status Styles */
+  .health-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
 
-.health-online {
-  color: #17ad37;
-}
+  .health-status-text {
+    color: #67748e;
+  }
 
-.health-offline {
-  color: #ea0606;
-}
+  .health-online {
+    color: #17ad37;
+  }
 
-/* Spinner */
-.spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #e2e8f0;
-  border-top-color: #35d1f5;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
+  .health-offline {
+    color: #ea0606;
+  }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
+  /* Spinner */
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #35d1f5;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
