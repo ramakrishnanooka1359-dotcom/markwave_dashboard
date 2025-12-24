@@ -38,36 +38,57 @@
 
   /* Sidebar - Soft UI Style */
   .sidebar {
-    width: 260px;
+    width: 220px;
+    /* Reduced from 260px */
     background-color: transparent;
-    /* Transparent to allow "floating" look of inner container if we wanted, but we'll stick to a clean layout */
     display: flex;
     flex-direction: column;
     padding: 1.5rem;
     flex-shrink: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
     z-index: 100;
   }
 
-
-
   .sidebar.closed {
-    width: 90px;
-    padding: 1.5rem 1rem;
+    width: 72px;
+    /* Reduced to minimal size */
+    padding: 1.5rem 0.75rem;
+    /* Reduced padding */
   }
 
+  /* Smooth transition for text elements */
+  .nav-text,
+  .user-info {
+    opacity: 1;
+    transition: opacity 0.2s ease, width 0.2s ease, margin 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* Hide text smoothly in closed state */
   .sidebar.closed .nav-text,
-  .sidebar.closed .user-info h2,
-  .sidebar.closed .user-info p {
-    display: none;
+  .sidebar.closed .user-info {
+    opacity: 0;
+    width: 0;
+    margin: 0;
   }
 
   .sidebar.closed .nav-item {
     justify-content: center;
     padding: 12px;
+    /* Keep vertical padding */
+  }
+
+  /* Adjust gap via margin on text instead of gap on container for smooth collapse */
+  .nav-item {
+    gap: 0;
+  }
+
+  .nav-text {
+    margin-left: 12px;
   }
 
   .sidebar.closed .user-profile {
@@ -76,10 +97,11 @@
     padding: 0.5rem;
     background: transparent;
     box-shadow: none;
+    gap: 0;
   }
 
-  .sidebar.closed .user-info {
-    display: none;
+  .user-info {
+    margin-left: 12px;
   }
 
   .sidebar.closed .user-profile:hover {
@@ -108,7 +130,7 @@
   .nav-item {
     display: flex;
     align-items: center;
-    gap: 12px;
+    /* gap removed here, handled by margin on .nav-text for animation */
     padding: 12px 16px;
     width: 100%;
     border: none;
@@ -178,13 +200,15 @@
   .user-profile {
     display: flex;
     align-items: center;
-    gap: 12px;
+    /* gap removed here, handled by margin on .user-info */
     padding: 1rem;
     background-color: #fff;
     border-radius: var(--border-radius-lg);
     box-shadow: var(--soft-shadow);
     transition: transform 0.2s;
     cursor: pointer;
+    overflow: hidden;
+    /* Ensure content doesn't spill during transition */
   }
 
   .user-profile:hover {
@@ -210,6 +234,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    /* Margin left added in sidebar block for transition logic */
   }
 
   .user-name {
@@ -522,20 +547,41 @@
     }
 
     .sidebar {
-      position: absolute;
-      height: 100%;
+      position: fixed;
+      /* Changed to fixed to float over content properly on mobile */
+      top: 0;
+      bottom: 0;
+      /* Full height */
+      left: 0;
+      z-index: 200;
+      /* Higher than header */
+      height: 100vh;
       background: white;
-      /* Needs background since it overlaps */
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
       transform: translateX(0);
+      width: 240px;
+      /* Standard mobile drawer width */
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .sidebar.closed {
-      width: 260px;
-      /* Keep width, just slide it out */
       transform: translateX(-100%);
+      width: 240px;
+      /* Keep width same, just hide */
       padding: 1.5rem;
-      /* Restore padding */
+    }
+
+    /* On mobile, when "closed", it means hidden. Reset the internal hiding logic used for desktop collapsed state */
+    .sidebar.closed .nav-text,
+    .sidebar.closed .user-info {
+      opacity: 1;
+      width: auto;
+      margin-left: 12px;
+    }
+
+    .sidebar.closed .nav-item {
+      justify-content: flex-start;
+      /* Reset justification */
     }
 
     /* Hide the "closed" elements logic on mobile since we translate the whole bar */

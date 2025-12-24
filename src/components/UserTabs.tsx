@@ -523,9 +523,16 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+
   const [activeUnitIndex, setActiveUnitIndex] = useState<number | null>(null);
 
-  // ID Proof Modal State
+  // New State for Timeline Progress
+  const [trackingData, setTrackingData] = useState<{
+    [key: string]: { // key: `${orderId}-${buffaloNum}`
+      currentStageId: number;
+      history: { [stageId: number]: { date: string, time: string } };
+    }
+  }>({});
   const [paymentFilter, setPaymentFilter] = useState("All Payments");
   const [statusFilter, setStatusFilter] = useState("PENDING_ADMIN_VERIFICATION");
   const [showFullDetails, setShowFullDetails] = useState(false);
@@ -817,6 +824,61 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
     setShowEditModal(false);
     setEditingUser(null);
   };
+
+  // Helper to format date/time
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    const date = now.toLocaleDateString('en-GB').replace(/\//g, '-');
+    const time = now.toLocaleTimeString('en-GB');
+    return { date, time };
+  };
+
+  // Initialize tracking for a buffalo if not present
+  const getTrackingForBuffalo = (orderId: string, buffaloNum: number, initialStatus: string) => {
+    const key = `${orderId}-${buffaloNum}`;
+
+    // Lazy initialization logic inside render or handler usually, but here accessing state directly
+    // If not exists, return default based on paymentStatus
+    if (trackingData[key]) {
+      return trackingData[key];
+    }
+
+    // Default mapping - Always start at Stage 1
+    let stageId = 1; // Order Placed
+    const history: any = {
+      1: { date: '24-05-2025', time: '10:30:00' } // Mock initial
+    };
+
+    // Note: Previous logic to auto-advance based on paymentStatus is removed 
+    // to allow full manual "Update" flow from the start.
+
+    // We return a transient object if not in state, but ideally we should set state.
+    // However, to avoid infinite loops, we'll return this derived state.
+    // The "Update" action will commit it to state.
+    return { currentStageId: stageId, history };
+  };
+
+  const handleStageUpdate = (orderId: string, buffaloNum: number, nextStageId: number) => {
+    const key = `${orderId}-${buffaloNum}`;
+    setTrackingData(prev => {
+      // Get current or default
+      const current = prev[key] || getTrackingForBuffalo(orderId, buffaloNum, 'PENDING_ADMIN_VERIFICATION'); // Default fallback if purely new
+
+      const { date, time } = getCurrentDateTime();
+
+      return {
+        ...prev,
+        [key]: {
+          currentStageId: nextStageId,
+          history: {
+            ...current.history,
+            [nextStageId]: { date, time }
+          }
+        }
+      };
+    });
+  };
+
   const handleViewProof = (transaction: any, investor: any) => {
     setSelectedProofData({ ...transaction, name: investor.name });
     setShowProofModal(true);
@@ -1202,7 +1264,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                                     {unit.id}
                                   </button>
                                 </td>
-                                
+
                                 <td>{inv.mobile}</td>
                                 <td>{inv.email || '-'}</td>
                                 <td>{tx.amount ?? '-'}</td>
@@ -1217,7 +1279,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                                     </button>
                                   ) || '-'}
                                 </td>
-                                
+
                                 <td>
                                   <div style={{ display: 'flex', gap: '8px' }}>
                                     {unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' && (
@@ -1228,7 +1290,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                                         Approve
                                       </button>
                                     )}
-                                    {(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION' ) && (
+                                    {(unit.paymentStatus === 'PENDING_ADMIN_VERIFICATION') && (
                                       <button
                                         onClick={() => handleReject(unit.id)}
                                         className="action-btn reject"
@@ -1410,124 +1472,134 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                                         {/* Right Side: Stepper Progress */}
                                         <div style={{ flex: 1 }}>
                                           {activeUnitIndex !== null ? (
-                                            <div className="order-expand-animation" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                                              {[1, 2].map((buffaloNum) => (
-                                                <div key={buffaloNum} style={{ padding: '24px', backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-                                                  <div style={{ fontWeight: '700', color: '#111827', fontSize: '15px', marginBottom: '24px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
-                                                    Buffalo {buffaloNum} Progress
+                                            <div className="order-expand-animation" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px' }}>
+                                              {[1, 2].map((buffaloNum) => {
+                                                // Get tracking state
+                                                const tracker = trackingData[`${unit.id}-${buffaloNum}`] || getTrackingForBuffalo(unit.id, buffaloNum, unit.paymentStatus);
+                                                const currentStageId = tracker.currentStageId;
+
+                                                const timelineStages = [
+                                                  { id: 1, label: 'Order Placed' },
+                                                  { id: 2, label: 'Payment Pending' },
+                                                  { id: 3, label: 'Order Confirm' },
+                                                  { id: 4, label: 'Order Approved' },
+                                                  { id: 5, label: 'Order in Market' },
+                                                  { id: 6, label: 'Order in Quarantine' },
+                                                  { id: 7, label: 'In Transit' },
+                                                  { id: 8, label: 'Order Delivered' }
+                                                ];
+
+                                                return (
+                                                  <div key={buffaloNum} style={{ padding: '24px', backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #f1f5f9', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
+                                                    <div style={{ fontWeight: '700', color: '#111827', fontSize: '15px', marginBottom: '24px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+                                                      Buffalo {buffaloNum} Progress
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                      {timelineStages.map((stage, idx) => {
+                                                        const isLast = idx === timelineStages.length - 1;
+
+                                                        // Status Logic based on tracking state
+                                                        // Completed: stage.id < currentStageId
+                                                        // Current: stage.id === currentStageId
+                                                        // Pending: stage.id > currentStageId
+                                                        const isStepCompleted = stage.id < currentStageId;
+                                                        const isCurrent = stage.id === currentStageId;
+
+                                                        const stageDate = tracker.history[stage.id]?.date || '-';
+                                                        const stageTime = tracker.history[stage.id]?.time || '-';
+
+                                                        return (
+                                                          <div key={stage.id} style={{ display: 'flex', minHeight: '80px', position: 'relative' }}>
+                                                            {/* Left: Date */}
+                                                            <div style={{ width: '90px', paddingRight: '16px', textAlign: 'right', paddingTop: '4px' }}>
+                                                              <div style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>{stageDate}</div>
+                                                            </div>
+
+                                                            {/* Middle: Marker & Line */}
+                                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px', position: 'relative' }}>
+                                                              {/* Line */}
+                                                              {!isLast && (
+                                                                <div style={{
+                                                                  position: 'absolute', top: '24px', bottom: '-4px', width: '2px',
+                                                                  backgroundColor: isStepCompleted ? '#10b981' : '#e2e8f0',
+                                                                  zIndex: 1
+                                                                }} />
+                                                              )}
+                                                              {/* Circle */}
+                                                              <div style={{
+                                                                width: '24px', height: '24px', borderRadius: '50%',
+                                                                backgroundColor: isStepCompleted ? '#10b981' : (isCurrent ? '#3b82f6' : '#fff'),
+                                                                border: `2px solid ${isStepCompleted ? '#10b981' : (isCurrent ? '#3b82f6' : '#e2e8f0')}`,
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                color: isStepCompleted || isCurrent ? 'white' : '#9ca3af',
+                                                                fontSize: '12px', fontWeight: 'bold', zIndex: 2,
+                                                                flexShrink: 0
+                                                              }}>
+                                                                {isStepCompleted ? '✓' : stage.id}
+                                                              </div>
+                                                            </div>
+
+                                                            {/* Right: Content */}
+                                                            <div style={{ flex: 1, paddingBottom: isLast ? '0' : '24px' }}>
+                                                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                                                                <div style={{
+                                                                  fontSize: '14px', fontWeight: '700',
+                                                                  color: isStepCompleted ? '#10b981' : (isCurrent ? '#3b82f6' : '#9ca3af')
+                                                                }}>
+                                                                  {stage.label}
+                                                                </div>
+
+                                                                {/* Update Button */}
+                                                                {(isCurrent) && (
+                                                                  <button
+                                                                    style={{
+                                                                      padding: '4px 12px',
+                                                                      borderRadius: '6px',
+                                                                      border: 'none',
+                                                                      background: '#2563eb',
+                                                                      color: '#fff',
+                                                                      fontSize: '11px',
+                                                                      fontWeight: '600',
+                                                                      cursor: 'pointer',
+                                                                      transition: 'all 0.2s',
+                                                                      whiteSpace: 'nowrap',
+                                                                      marginLeft: '12px'
+                                                                    }}
+                                                                    onClick={() => handleStageUpdate(unit.id, buffaloNum, stage.id + 1)}
+                                                                  >
+                                                                    {stage.id === 8 ? 'Confirm Delivery' : 'Update'}
+                                                                  </button>
+                                                                )}
+
+                                                                {/* Completed Label/Button */}
+                                                                {isStepCompleted && (
+                                                                  <span style={{
+                                                                    padding: '4px 12px',
+                                                                    borderRadius: '6px',
+                                                                    background: '#dcfce7',
+                                                                    color: '#166534',
+                                                                    fontSize: '11px',
+                                                                    fontWeight: '600',
+                                                                    marginLeft: '12px'
+                                                                  }}>
+                                                                    {stage.id === 8 ? 'Delivered' : 'Completed'}
+                                                                  </span>
+                                                                )}
+                                                              </div>
+
+                                                              {/* Time below stage name */}
+                                                              <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                                                                {stageTime !== '-' ? stageTime : ''}
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                        );
+                                                      })}
+                                                    </div>
                                                   </div>
-
-                                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0', position: 'relative', paddingLeft: '8px' }}>
-                                                    {/* Placed */}
-                                                    <div
-                                                      style={{ display: 'flex', gap: '16px', position: 'relative', paddingBottom: '32px', cursor: 'help' }}
-                                                      title="SKU: BW-2024-001 | Qty: 2 units. Successfully recorded in central ledger."
-                                                    >
-                                                      <div style={{ position: 'absolute', left: '11px', top: '24px', bottom: '0', width: '2px', backgroundColor: '#10b981', zIndex: 1 }}></div>
-                                                      <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '12px', fontWeight: 'bold', zIndex: 2 }}>✓</div>
-                                                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <div style={{ fontSize: '14px', fontWeight: '700', color: '#10b981' }}>Order Placed</div>
-                                                        <div style={{ fontSize: '11px', color: '#64748b' }}>Recorded successfully</div>
-                                                        <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>24-05-2025 10:30:00</div>
-                                                      </div>
-                                                    </div>
-
-                                                    {/* Verification */}
-                                                    <div
-                                                      style={{ display: 'flex', gap: '16px', position: 'relative', paddingBottom: '32px', cursor: 'help' }}
-                                                      title="Proof Ref: PRF-8821 | Status: Verified by AI-Scan. Awaiting final human sign-off."
-                                                    >
-                                                      <div style={{
-                                                        position: 'absolute', left: '11px', top: '24px', bottom: '0', width: '2px',
-                                                        backgroundColor: ['Approved', 'PAID', 'Rejected', 'REJECTED'].includes(unit.paymentStatus) ? '#10b981' : '#e5e7eb',
-                                                        zIndex: 1
-                                                      }}></div>
-                                                      <div style={{
-                                                        width: '24px', height: '24px', borderRadius: '50%',
-                                                        backgroundColor: ['PENDING_ADMIN_VERIFICATION', 'Approved', 'PAID', 'Rejected', 'REJECTED'].includes(unit.paymentStatus) ? '#10b981' : '#fff',
-                                                        border: '2px solid' + (['PENDING_ADMIN_VERIFICATION', 'Approved', 'PAID', 'Rejected', 'REJECTED'].includes(unit.paymentStatus) ? '#10b981' : '#e5e7eb'),
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        color: ['PENDING_ADMIN_VERIFICATION', 'Approved', 'PAID', 'Rejected', 'REJECTED'].includes(unit.paymentStatus) ? 'white' : '#9ca3af',
-                                                        fontSize: '12px', fontWeight: 'bold', zIndex: 2
-                                                      }}>
-                                                        {['Approved', 'PAID', 'Rejected', 'REJECTED'].includes(unit.paymentStatus) ? '✓' : '2'}
-                                                      </div>
-                                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                        <div style={{
-                                                          fontSize: '14px', fontWeight: '700',
-                                                          color: '#10b981'
-                                                        }}>Admin Verification</div>
-                                                        <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>24-05-2025 14:15:00</div>
-                                                      </div>
-                                                    </div>
-
-                                                    {/* Approved/Rejected */}
-                                                    <div
-                                                      style={{ display: 'flex', gap: '16px', position: 'relative', paddingBottom: '32px', cursor: 'help' }}
-                                                      title={['Rejected', 'REJECTED'].includes(unit.paymentStatus) ? "Review complete: Transaction has been rejected. Ref: FN-RJ-001" : "Txn ID: MN-102938475 | Method: Bank Transfer. Confirmed by clearing house."}
-                                                    >
-                                                      <div style={{
-                                                        position: 'absolute', left: '11px', top: '24px', bottom: '0', width: '2px',
-                                                        backgroundColor: ['Approved', 'PAID'].includes(unit.paymentStatus) ? '#10b981' : '#e5e7eb',
-                                                        zIndex: 1
-                                                      }}></div>
-                                                      <div style={{
-                                                        width: '24px', height: '24px', borderRadius: '50%',
-                                                        backgroundColor: ['Approved', 'PAID'].includes(unit.paymentStatus) ? '#10b981' : (['Rejected', 'REJECTED'].includes(unit.paymentStatus) ? '#ef4444' : '#fff'),
-                                                        border: '2px solid' + (['Approved', 'PAID'].includes(unit.paymentStatus) ? '#10b981' : (['Rejected', 'REJECTED'].includes(unit.paymentStatus) ? '#ef4444' : '#e5e7eb')),
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        color: (['Approved', 'PAID', 'Rejected', 'REJECTED'].includes(unit.paymentStatus)) ? 'white' : '#9ca3af',
-                                                        fontSize: '12px', fontWeight: 'bold', zIndex: 2
-                                                      }}>
-                                                        {['Approved', 'PAID'].includes(unit.paymentStatus) ? '✓' : (['Rejected', 'REJECTED'].includes(unit.paymentStatus) ? '!' : '3')}
-                                                      </div>
-                                                      <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                                        <div style={{
-                                                          fontSize: '14px', fontWeight: '700',
-                                                          color: ['Approved', 'PAID'].includes(unit.paymentStatus) ? '#10b981' : (['Rejected', 'REJECTED'].includes(unit.paymentStatus) ? '#ef4444' : '#9ca3af')
-                                                        }}>
-                                                          {['Rejected', 'REJECTED'].includes(unit.paymentStatus) ? 'Order Rejected' : 'Payment Approved'}
-                                                        </div>
-                                                        {['Approved', 'PAID', 'Rejected', 'REJECTED'].includes(unit.paymentStatus) && (
-                                                          <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>25-05-2025 09:45:00</div>
-                                                        )}
-                                                      </div>
-                                                    </div>
-
-                                                    {/* Delivered */}
-                                                    <div
-                                                      style={{ display: 'flex', gap: '16px', position: 'relative', cursor: 'help' }}
-                                                      title="Batch: WH-NORTH-04 | Logistics: North-Wing Fleet. Preparing for final assignment."
-                                                    >
-                                                      <div style={{
-                                                        width: '24px', height: '24px', borderRadius: '50%',
-                                                        backgroundColor: ['Approved', 'PAID'].includes(unit.paymentStatus) ? '#10b981' : '#fff',
-                                                        border: '2px solid' + (['Approved', 'PAID'].includes(unit.paymentStatus) ? '#10b981' : '#e5e7eb'),
-                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                        color: ['Approved', 'PAID'].includes(unit.paymentStatus) ? 'white' : '#9ca3af',
-                                                        fontSize: '12px', fontWeight: 'bold', zIndex: 2
-                                                      }}>
-                                                        {['Approved', 'PAID'].includes(unit.paymentStatus) ? '✓' : '4'}
-                                                      </div>
-                                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                        <div style={{
-                                                          fontSize: '14px', fontWeight: '700',
-                                                          color: ['Approved', 'PAID'].includes(unit.paymentStatus) ? '#10b981' : '#9ca3af'
-                                                        }}>Processed for Delivery</div>
-                                                        {['PAID', 'Approved'].includes(unit.paymentStatus) && (
-                                                          <button
-                                                            className="action-btn approve"
-                                                            style={{ padding: '4px 10px', fontSize: '11px', backgroundColor: '#0ea5e9', alignSelf: 'flex-start' }}
-                                                            disabled
-                                                          >
-                                                            Mark as Delivered
-                                                          </button>
-                                                        )}
-                                                      </div>
-                                                    </div>
-                                                  </div>
-                                                </div>
-                                              ))}
+                                                );
+                                              })}
                                             </div>
                                           ) : (
                                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: '14px', fontStyle: 'italic' }}>
