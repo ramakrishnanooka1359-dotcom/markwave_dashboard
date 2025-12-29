@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './UserTabs.css';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
-import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin } from 'lucide-react';
+import { LayoutDashboard, Users, TreePine, ShoppingBag, LogOut, UserCheck, Menu, X, MapPin, Calculator, MonitorPlay } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import type { RootState } from '../../store';
 import {
@@ -41,8 +41,10 @@ const OrdersTab = React.lazy(() => import('../sidebar-tabs/OrdersTab'));
 const NonVerifiedUsersTab = React.lazy(() => import('../sidebar-tabs/NonVerifiedUsersTab'));
 const ExistingCustomersTab = React.lazy(() => import('../sidebar-tabs/ExistingCustomersTab'));
 const ProductsTab = React.lazy(() => import('../sidebar-tabs/ProductsTab'));
-const BuffaloTreeTab = React.lazy(() => import('../sidebar-tabs/BuffaloTreeTab'));
+// const BuffaloTreeTab = React.lazy(() => import('../sidebar-tabs/BuffaloTreeTab'));
 const TrackingTab = React.lazy(() => import('../sidebar-tabs/TrackingTab'));
+const BuffaloVisualizationTab = React.lazy(() => import('../sidebar-tabs/BuffaloVisualizationTab'));
+const EmiCalculatorTab = React.lazy(() => import('../sidebar-tabs/EmiCalculatorTab'));
 
 
 interface UserTabsProps {
@@ -332,10 +334,14 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
               return <NonVerifiedUsersTab getSortIcon={getSortIcon} />;
             case 'existing':
               return <ExistingCustomersTab getSortIcon={getSortIcon} />;
-            case 'tree':
-              return <BuffaloTreeTab />;
+            // case 'tree':
+            //   return <BuffaloTreeTab />;
             case 'products':
               return <ProductsTab />;
+            case 'buffaloViz':
+              return <BuffaloVisualizationTab />;
+            case 'emi':
+              return <EmiCalculatorTab />;
             default:
               return <OrdersTab handleApproveClick={handleApproveClick} handleReject={handleReject} />;
           }
@@ -506,7 +512,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
 
 
             {/* Buffalo Tree */}
-            <li>
+            {/* <li>
               <button
                 className={`nav-item ${activeTab === 'tree' ? 'active-main' : ''}`}
                 onClick={(e) => {
@@ -519,7 +525,7 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                   <span className="nav-text">Buffalo Tree</span>
                 </div>
               </button>
-            </li>
+            </li> */}
 
             {/* Products */}
             <li>
@@ -533,6 +539,38 @@ const UserTabs: React.FC<UserTabsProps> = ({ adminMobile, adminName, adminRole, 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                   <ShoppingBag size={18} />
                   <span className="nav-text">Products</span>
+                </div>
+              </button>
+            </li>
+
+            {/* Buffalo Visualization */}
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'buffaloViz' ? 'active-main' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dispatch(setActiveTab('buffaloViz'));
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <MonitorPlay size={18} />
+                  <span className="nav-text">Buffalo Vis</span>
+                </div>
+              </button>
+            </li>
+
+            {/* EMI Calculator */}
+            <li>
+              <button
+                className={`nav-item ${activeTab === 'emi' ? 'active-main' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  dispatch(setActiveTab('emi'));
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                  <Calculator size={18} />
+                  <span className="nav-text">EMI Calculator</span>
                 </div>
               </button>
             </li>

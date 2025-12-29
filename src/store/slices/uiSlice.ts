@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface UIState {
-    activeTab: 'orders' | 'nonVerified' | 'existing' | 'tree' | 'products' | 'tracking';
+    activeTab: 'orders' | 'nonVerified' | 'existing' | 'tree' | 'products' | 'tracking' | 'buffaloViz' | 'emi';
     isSidebarOpen: boolean;
     showAdminDetails: boolean;
     modals: {
